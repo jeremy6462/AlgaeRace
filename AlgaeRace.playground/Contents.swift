@@ -14,10 +14,16 @@ import UIKit
     - Goes up: fish touches an oxygen bubble
     - Goes down: small rate of decrease over time, larger rate for each movement
  
+ Movement:
+    - Move at a certain screen percentage when in normal water
+    - Move at slower screen percentage with in algae
+ 
  Constant increasing rate of algae growth, but when oxygen becomes very sparse, the rate decreases to 0
  */
 
 typealias DecimalPercentage = Double
+
+typealias Probability = DecimalPercentage
 
 struct Fish {
     
@@ -49,7 +55,6 @@ struct Fish {
         self.currentHorizontalPosition += amount
         self.movementSubscriber?.movement(of: self, to: self.currentHorizontalPosition)
         self.updateOxygenSupply(by: OXYGEN_MOVEMENT_COST)
-        
     }
     
     mutating func updateOxygenSupply(by amount: DecimalPercentage) {
@@ -67,4 +72,53 @@ protocol FishMovementSubscriber: class {
     func movement(of fish: Fish, to position: DecimalPercentage)
 }
 
+protocol RowContainable { }
+struct Algae: RowContainable { }
+struct Oxygen: RowContainable { }
+struct Water: RowContainable { }
 
+struct Row {
+    
+    static let CONTENT_UNIT_SIZE: DecimalPercentage = 0.05
+    
+    var contents = [RowContainable](repeating: Water(), count: Int(1.0/Row.CONTENT_UNIT_SIZE))
+    
+    init(difficulty: Probability) {
+        self.fillRow()
+    }
+    
+    private func fillRow() {
+        
+        var maybeOxygenIndex: Int? = nil
+        
+        // only one oxygen per row
+        let containsOxygen = Double.random >= difficulty
+        if containsOxygen {
+            let index = Int(arc4random_uniform(UInt32(contents.count)))
+            contents[index] = Oxygen()
+            maybeOxygenIndex = index
+        }
+        
+        // fill rest probablistically with algae
+        for index in 0 ..< contents.count {
+            if let oxygenIndex = maybeOxygenIndex, index != oxygenIndex {
+                continue
+            }
+            var containsAlgaeClump = Double.random <= pow(difficulty, 2.0) // exponentially gets more likely to be true
+            if containsAlgaeClump  {
+                contents[index] = Algae()
+            }
+        }
+        
+    }
+    
+    
+}
+
+extension Double {
+    
+    /// returns a random Double between 0 and 1
+    static var random: Double {
+        return Double(Double(arc4random()) / Double(UINT32_MAX))
+    }
+}
