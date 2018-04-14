@@ -74,16 +74,17 @@ protocol FishMovementSubscriber: class {
     func movement(of fish: Fish, to position: DecimalPercentage)
 }
 
-protocol RowContainable { }
-struct Algae: RowContainable { }
-struct Oxygen: RowContainable { }
-struct Water: RowContainable { }
+enum RowContainable {
+    case algae
+    case oxygen
+    case water
+}
 
 struct Row {
     
     static let CONTENT_UNIT_SIZE: DecimalPercentage = 0.05
     
-    var contents = [RowContainable](repeating: Water(), count: Int(1.0/Row.CONTENT_UNIT_SIZE))
+    var contents = [RowContainable](repeating: .water, count: Int(1.0/Row.CONTENT_UNIT_SIZE))
     
     init(difficulty: Probability) {
         
@@ -93,7 +94,7 @@ struct Row {
         let containsOxygen = Double.random >= difficulty
         if containsOxygen {
             let index = Int(arc4random_uniform(UInt32(contents.count)))
-            contents[index] = Oxygen()
+            contents[index] = .oxygen
             maybeOxygenIndex = index
         }
         
@@ -104,7 +105,7 @@ struct Row {
             }
             let containsAlgaeClump = Double.random <= pow(difficulty, 2.0) // exponentially gets more likely to be true
             if containsAlgaeClump  {
-                contents[index] = Algae()
+                contents[index] = .algae
             }
         }
         
@@ -151,12 +152,18 @@ class AlgaeRaceViewController: UIViewController {
 
 class AlgaeRaceScene: SKScene {
     
+    let VISIBLE_ROW_COUNT = 10
+    
     let fishModel = Fish()
     var fishSprite = { () -> SKSpriteNode in
         let sprite = SKSpriteNode(imageNamed: "fish")
         sprite.size = CGSize(width: 0.1, height: 0.1)
         return sprite
     }()
+    
+    var currentRows = [(row: Row, nodeGroup: SKNode)]()
+    
+    var currentDifficulty = 0.5
     
     override func didMove(to view: SKView) {
         
@@ -165,7 +172,50 @@ class AlgaeRaceScene: SKScene {
         self.fishSprite.position = CGPoint(x: self.size.width * CGFloat(self.fishModel.currentHorizontalPosition), y: fishSprite.size.height)
         self.addChild(self.fishSprite)
         
+        for _ in 0..<VISIBLE_ROW_COUNT+1 {
+            self.addNewRow()
+        }
         
+        self.currentRows.map { $0.nodeGroup }.forEach {
+            self.addChild($0)
+        }
+        
+        
+        
+    }
+    
+    func addNewRow() {
+        
+        let row = Row(difficulty: self.currentDifficulty)
+        
+        let group = SKNode()
+        
+        for position in 0 ..< row.contents.count {
+            
+            let content = row.contents[position]
+            var maybeAssetName: String? = nil
+            
+            switch content {
+            case .algae:
+                maybeAssetName = "algae"
+            case .oxygen:
+                maybeAssetName = "o2_bubble"
+            case .water:
+                break
+            }
+            
+            guard let assetName = maybeAssetName else {
+                continue
+            }
+            
+            let sprite = SKSpriteNode(imageNamed: assetName)
+            sprite.size = CGSize(width: Row.CONTENT_UNIT_SIZE, height: Row.CONTENT_UNIT_SIZE)
+            sprite.position = CGPoint(x: CGFloat(position)/CGFloat(row.contents.count), y: CGFloat(self.currentRows.count)/CGFloat(VISIBLE_ROW_COUNT))
+            
+            group.addChild(sprite)
+        }
+        
+        self.currentRows.append((row: row, nodeGroup: group))
     }
     
 }
