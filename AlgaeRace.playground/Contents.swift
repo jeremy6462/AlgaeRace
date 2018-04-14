@@ -102,7 +102,7 @@ struct Row {
             if let oxygenIndex = maybeOxygenIndex, index != oxygenIndex {
                 continue
             }
-            var containsAlgaeClump = Double.random <= pow(difficulty, 2.0) // exponentially gets more likely to be true
+            let containsAlgaeClump = Double.random <= pow(difficulty, 2.0) // exponentially gets more likely to be true
             if containsAlgaeClump  {
                 contents[index] = Algae()
             }
@@ -136,7 +136,7 @@ class AlgaeRaceViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let scene = SKScene()
+        let scene = AlgaeRaceScene()
         self.skView.presentScene(scene)
         
         self.view.addSubview(skView)
@@ -147,6 +147,39 @@ class AlgaeRaceViewController: UIViewController {
             self.skView.leftAnchor.constraint(equalTo: self.view.leftAnchor),
             ])
     }
+}
+
+class AlgaeRaceScene: SKScene {
+    
+    let fishModel = Fish()
+    var fishSprite = { () -> SKSpriteNode in
+        let sprite = SKSpriteNode(imageNamed: "fish")
+        sprite.size = CGSize(width: 0.1, height: 0.1)
+        return sprite
+    }()
+    
+    override func didMove(to view: SKView) {
+        
+        self.backgroundColor = SKColor(displayP3Red: 224/255, green: 238/255, blue: 255/255, alpha: 1.0)
+        
+        self.fishSprite.position = CGPoint(x: self.size.width * CGFloat(self.fishModel.currentHorizontalPosition), y: fishSprite.size.height)
+        self.addChild(self.fishSprite)
+        
+        
+    }
+    
+}
+
+extension AlgaeRaceScene: FishMovementSubscriber, FishOxygenSupplySubscriber {
+    
+    func movement(of fish: Fish, to position: DecimalPercentage) {
+    
+    }
+    
+    func oxygenSupply(of fish: Fish, didUpdateTo oxygenSupply: DecimalPercentage) {
+        
+    }
+
 }
 
 PlaygroundPage.current.liveView = AlgaeRaceViewController()
