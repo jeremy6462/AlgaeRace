@@ -1,6 +1,7 @@
 //: Playground - noun: a place where people can play
 
 import UIKit
+import PlaygroundSupport
 
 /*
  Game: Algae Race
@@ -84,10 +85,6 @@ struct Row {
     var contents = [RowContainable](repeating: Water(), count: Int(1.0/Row.CONTENT_UNIT_SIZE))
     
     init(difficulty: Probability) {
-        self.fillRow()
-    }
-    
-    private func fillRow() {
         
         var maybeOxygenIndex: Int? = nil
         
@@ -112,7 +109,6 @@ struct Row {
         
     }
     
-    
 }
 
 extension Double {
@@ -122,3 +118,22 @@ extension Double {
         return Double(Double(arc4random()) / Double(UINT32_MAX))
     }
 }
+
+
+
+class AlgaeRaceViewController: UIViewController {
+    override func loadView() {
+        let view = UIView()
+        view.backgroundColor = .white
+        
+        let label = UILabel()
+        label.frame = CGRect(x: 150, y: 200, width: 200, height: 20)
+        label.text = "Hello World!"
+        label.textColor = .black
+        
+        view.addSubview(label)
+        self.view = view
+    }
+}
+
+PlaygroundPage.current.liveView = AlgaeRaceViewController()
