@@ -1,6 +1,7 @@
 //: Playground - noun: a place where people can play
 
 import UIKit
+import SpriteKit
 import PlaygroundSupport
 
 /*
@@ -122,17 +123,29 @@ extension Double {
 
 
 class AlgaeRaceViewController: UIViewController {
-    override func loadView() {
-        let view = UIView()
-        view.backgroundColor = .white
+    
+    let skView = { () -> SKView in
+        let view = SKView(frame: CGRect(x: 0.0, y: 0.0, width: 473.0, height: 627.0))
+        view.ignoresSiblingOrder = true
+        view.showsFPS = true
+        view.showsNodeCount = true
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
         
-        let label = UILabel()
-        label.frame = CGRect(x: 150, y: 200, width: 200, height: 20)
-        label.text = "Hello World!"
-        label.textColor = .black
+        let scene = SKScene()
+        self.skView.presentScene(scene)
         
-        view.addSubview(label)
-        self.view = view
+        self.view.addSubview(skView)
+        NSLayoutConstraint.activate([
+            self.skView.topAnchor.constraint(equalTo: self.view.topAnchor),
+            self.skView.rightAnchor.constraint(equalTo: self.view.rightAnchor),
+            self.skView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
+            self.skView.leftAnchor.constraint(equalTo: self.view.leftAnchor),
+            ])
     }
 }
 
