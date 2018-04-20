@@ -113,6 +113,12 @@ struct Row {
     
 }
 
+extension Row: Equatable {
+    static func ==(lhs: Row, rhs: Row) -> Bool {
+        return lhs.contents == rhs.contents
+    }
+}
+
 extension Double {
     
     /// returns a random Double between 0 and 1
@@ -173,18 +179,12 @@ class AlgaeRaceScene: SKScene {
         self.addChild(self.fishSprite)
         
         for _ in 0..<VISIBLE_ROW_COUNT+1 {
-            self.addNewRow()
+            self.generateNextRow()
         }
-        
-        self.currentRows.map { $0.nodeGroup }.forEach {
-            self.addChild($0)
-        }
-        
-        
         
     }
     
-    func addNewRow() {
+    func generateNextRow() {
         
         let row = Row(difficulty: self.currentDifficulty)
         
@@ -210,12 +210,35 @@ class AlgaeRaceScene: SKScene {
             
             let sprite = SKSpriteNode(imageNamed: assetName)
             sprite.size = CGSize(width: Row.CONTENT_UNIT_SIZE, height: Row.CONTENT_UNIT_SIZE)
-            sprite.position = CGPoint(x: CGFloat(position)/CGFloat(row.contents.count), y: CGFloat(self.currentRows.count)/CGFloat(VISIBLE_ROW_COUNT))
+            
+            let xPosition = CGFloat(position)/CGFloat(row.contents.count)
+            let yPosition = CGFloat(self.currentRows.count)/CGFloat(VISIBLE_ROW_COUNT)
+            sprite.position = CGPoint(x: xPosition, y: yPosition)
             
             group.addChild(sprite)
+            
         }
         
+        let fallDuration = 6.0 * (Double(self.currentRows.count)/Double(VISIBLE_ROW_COUNT))
+        
+        let fallAction = SKAction.move(to: CGPoint(x: group.position.x, y: -1), duration: fallDuration)
+        let removeAction = SKAction.run() { [weak self] in
+            group.removeFromParent()
+            let maybeGroupIndex = self?.currentRows.index {
+                return $0.row == row
+            }
+            if let groupIndex = maybeGroupIndex {
+                self?.currentRows.remove(at: groupIndex)
+            }
+        }
+        let generateAction = SKAction.run() { [weak self] in
+            self?.generateNextRow()
+        }
+        group.run(SKAction.sequence([fallAction, removeAction, generateAction]))
+        
         self.currentRows.append((row: row, nodeGroup: group))
+        self.addChild(group)
+        
     }
     
 }
