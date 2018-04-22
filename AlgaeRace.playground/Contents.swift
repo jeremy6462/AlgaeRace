@@ -224,12 +224,7 @@ class AlgaeRaceScene: SKScene {
         let fallAction = SKAction.move(to: CGPoint(x: group.position.x, y: -1), duration: fallDuration)
         let removeAction = SKAction.run() { [weak self] in
             group.removeFromParent()
-            let maybeGroupIndex = self?.currentRows.index {
-                return $0.row == row
-            }
-            if let groupIndex = maybeGroupIndex {
-                self?.currentRows.remove(at: groupIndex)
-            }
+            self?.currentRows.removeFirst() // this group will always be the first row in current rows
         }
         let generateAction = SKAction.run() { [weak self] in
             self?.generateNextRow()
