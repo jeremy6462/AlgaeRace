@@ -53,7 +53,8 @@ struct Fish {
         self.currentHorizontalPosition = horizontalPosition
     }
     
-    mutating func move(by amount: DecimalPercentage) {
+    mutating func move(by amount: DecimalPercentage) {d
+        guard (amount < 0 && self.currentHorizontalPosition > 0.05) || (amount > 0 && self.currentHorizontalPosition < 1) else { return }
         self.currentHorizontalPosition += amount
         self.movementSubscriber?.movement(of: self, to: self.currentHorizontalPosition)
         self.updateOxygenSupply(by: OXYGEN_MOVEMENT_COST)
@@ -160,7 +161,7 @@ class AlgaeRaceScene: SKScene {
     
     let VISIBLE_ROW_COUNT = 10
     
-    let fishModel = Fish()
+    var fishModel = Fish()
     var fishSprite = { () -> SKSpriteNode in
         let sprite = SKSpriteNode(imageNamed: "fish")
         sprite.size = CGSize(width: 0.1, height: 0.1)
@@ -174,6 +175,9 @@ class AlgaeRaceScene: SKScene {
     override func didMove(to view: SKView) {
         
         self.backgroundColor = SKColor(displayP3Red: 224/255, green: 238/255, blue: 255/255, alpha: 1.0)
+        
+        self.fishModel.oxygenSubscriber = self
+        self.fishModel.movementSubscriber = self
         
         self.fishSprite.position = CGPoint(x: self.size.width * CGFloat(self.fishModel.currentHorizontalPosition), y: fishSprite.size.height)
         self.addChild(self.fishSprite)
@@ -236,12 +240,33 @@ class AlgaeRaceScene: SKScene {
         
     }
     
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        for touch in touches {
+            let location = touch.location(in: self)
+            if location.y <= 0.75 {
+                if location.x <= 0.5 {
+                    self.moveFishLeft()
+                } else {
+                    self.moveFishRight()
+                }
+            }
+        }
+    }
+    
+    func moveFishRight() {
+        self.fishModel.move(by: 0.05)
+    }
+    
+    func moveFishLeft() {
+        self.fishModel.move(by: -0.05)
+    }
+    
 }
 
 extension AlgaeRaceScene: FishMovementSubscriber, FishOxygenSupplySubscriber {
     
     func movement(of fish: Fish, to position: DecimalPercentage) {
-    
+        self.fishSprite.position = CGPoint(x: position, y: Double(fishSprite.size.height))
     }
     
     func oxygenSupply(of fish: Fish, didUpdateTo oxygenSupply: DecimalPercentage) {
